@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+	<!-- Don't know why I'd need a version number, but I guess it's 1.0.0 released on 11/7/14 -->
+	<meta charset="UTF-8">
+	<title>SVG Inline Via AJAX</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+	<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+	<script src="main.js"></script>
+</head>
+<body>
+	<div class="container">
+		<h1 class="page-header">SVG Inline Via AJAX</h1>
+		<h2>Concept</h2>
+		<p>I've been working on a project at work for the past month or so and I've pushed the use of SVG quite a bit. Let's face it, SVG is awesome and lets us do some cool stuff, but it has some limitations. For example, SVG can be styled with CSS, but only if the SVG is inline. Putting that SVG inline can result in a lot of markup. There are ways around this such as inlining the SVG once and then xlinking it in multiple places in the document or using a CMS to shove the SVG into the markup.</p>
+		<p>This works pretty well, but doing inline SVG with a back end language introduces some security issues. What if we could load SVG's like images and still retain manipulation via CSS or JavaScript? My idea is to use AJAX loading to accomplish this. JavaScript isn't the best way of doing things and I don't like using it that much to shoehorn features that seem like they should be in the browser, but whatever.</p>
+		<h2>Implementation</h2>
+		<p>For my implementation I'll be using jQuery. The idea I had would be to create an element with an attribute <code>data-svg</code>. That element would then be overwritten using an AJAX request using a filename provided in the attribute. Consider the following markup:</p>
+		<pre>
+&lt;body&gt;
+...
+	&lt;div data-svg="img/kiwi.svg"&gt;&lt;div&gt;
+...
+&lt;/body&gt;</pre>
+		<p>The syntax is simple enough. This should make it very easy to place SVG's where we need them. An output of that example would be similar to the following:</p>
+		<pre>
+&lt;body&gt;
+...
+	&lt;?xml version="1.0" encoding="utf-8"?&gt;
+	&lt;!-- Generator: Adobe Illustrator 16.0.4, SVG Export Plug-In . SVG Version: 6.00 Build 0)  --&gt;
+	&lt;!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"&gt;
+	&lt;svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+		 width="612px" height="502.174px" viewBox="0 65.326 612 502.174" enable-background="new 0 65.326 612 502.174"
+		 xml:space="preserve"&gt;
+	&lt;ellipse fill="#C6C6C6" cx="283.5" cy="487.5" rx="259" ry="80"/&gt;
+	&lt;path id="bird" d="M210.333,65.331C104.367,66.105-12.349,150.637,1.056,276.449c4.303,40.393,18.533,63.704,52.171,79.03
+		c36.307,16.544,57.022,54.556,50.406,112.954c-9.935,4.88-17.405,11.031-19.132,20.015c7.531-0.17,14.943-0.312,22.59,4.341
+		...
+		z M445.731,203.01c6.12,0,11.112,4.919,11.112,11.038c0,6.119-4.994,11.111-11.112,11.111s-11.038-4.994-11.038-11.111
+		C434.693,207.929,439.613,203.01,445.731,203.01z"/&gt;
+	&lt;/svg&gt;
+...
+&lt;/body&gt;</pre>
+		<p>I wrote some rough JavaScript for this earlier today. It's pretty simple and works well.</p>
+		<pre>
+&lt;script type="text/javascript"&gt;
+  $(document).ready(function() {
+    $('[data-svg]').each(function(i, val) {
+      var element = $(this);
+      $.ajax({
+        url: element.data('svg'),
+        cache: true,
+        async: false,
+        dataType: 'html',
+        success: function(data) {
+          element.replaceWith(data);
+        }
+      });
+    });
+  });
+&lt;/script&gt;</pre>
+		<p>Example output:</p>
+		<pre>
+			<div data-svg="img/kiwi.svg"></div>
+		</pre>
+		<p>Obviously you can't see that it actually worked as the <code>div</code> was replaced by the inline SVG. Luckily this page is in <a href="http://github.com/pathartl/inline-svg-ajax">GitHub</a> so you can check it out for yourself.</p>
+		<h2>Pros / Cons</h2>
+		<h3>Pros:</h3>
+		<ul>
+			<li>Easier managment of inline SVG</li>
+			<li>Supported on any browser that supports inline SVG</li>
+			<li>Targetable via CSS and JavaScript</li>
+			<li>Ability to load asynchronously</li>
+			<li>All processing is done client side</li>
+		</ul>
+		<h3>Cons:</h3>
+		<ul>
+			<li>All processing is done client side (depends on how you want to look at it)</li>
+			<li>Not sure how this will work with caching</li>
+			<li>No cross site linking</li>
+			<li>More overhead when loading a web page</li>
+			<li>Requires jQuery</li>
+		</ul>
+		<p>The biggest drawbacks in my opinion are the increased overhead when loading the site and the fact it requires jQuery. If you can live with those two maybe this will help. Since this is just doing an AJAX request I'm sure you could accomplish this easily with vanilla JavaScript.</p>
+		<h2>Room For Improvements</h2>
+		<p>This method is absolutely not fool proof nor may it even be recommended. It's up to you I guess. I have no idea how good of a method this is. I thought it was interesting and wanted to share it. There are a couple of things that I haven't taken a look at yet that I am sure are easy to do, but I shall compile them into a list:</p>
+		<ul>
+			<li>Pass classes / ID's from placeholder element to returned SVG markup</li>
+			<li>Cross site linking. Probably achievable via jsonp.</li>
+			<li>Implementation without jQuery</li>
+		</ul>
+		<h2>Credit</h2>
+		<ul>
+			<li><strong>jQuery Team</strong> -- I use jQuery every day and it is still my go to JavaScript library.</li>
+			<li><strong>Chris at <a href="http://css-tricks.com">CSS Tricks</a></strong> -- I saw Chris at WordCamp Milwaukee 2014. He gave an awesome talk about SVG and its current implementation.</li>
+			<li><strong><a href="http://getbootstrap.com/">Bootstrap</a></strong> -- Don't know why I'm crediting them, just thanks for the framework!</li>
+		</ul>
+		<h2>Contact</h2>
+		<p>Check me out on <a href="http://twitter.com/pathartl">Twitter</a>, check out my site at <a href="http://pathartl.me">pathartl.me</a>, or check out other poorly coded projects at <a href="http://github.com/pathartl">GitHub</a>.</p>
+	</div>
+</body>
+</html>
